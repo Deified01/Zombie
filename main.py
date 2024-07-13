@@ -83,7 +83,7 @@ async def main():
         await process_messages(messages)
 
         # Start the file sending task
-        client.loop.create_task(send_file_to_telegram())
+        
 
 # Flask web server
 app = Flask(__name__)
