@@ -20,8 +20,8 @@ api_hash = '9ec5782ddd935f7e2763e5e49a590c0d'
 string_session = "1BVtsOL8Bu8ZK0k18_pmgLgWAGbQ4o0x6bloGX785FHl2jPLiafYKd-ZIapn9IuaZmce_KLbz_bG-XBXluXzrJ8az4VCyyIIyZxcFmNUcN-o75HSbZNI4XcC8s3Ms7OVsOz7HxywptvpKGYlxRcUTuC-GYCqIBxQS5x6uA1KqMVATrBgvdM8iSH_FUbDx9sYfNNsqQcUpS5-uBu528qUf_hAXypwa9hmWJzpkZL-mRvXJL2WozrO1BCaFTppU6ltjQjshZt7kV2PGSmgBEWaFo2sP2kYCvU9ETb5Nmo-sLuAAkJ2X1UstNdtvMFFc8m9wbNjkNvG_Dq4BfkxMnID2u1vkkW9yBtk="
 client = TelegramClient(StringSession(string_session), api_id, api_hash)
 
-# Set up SQLite connection
-conn = sqlite3.connect('telegram_data.db')
+# Set up in-memory SQLite connection
+conn = sqlite3.connect(':memory:')
 c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS media_data
              (base64_media TEXT, character_name TEXT)''')
@@ -71,11 +71,16 @@ async def main():
         # Process the messages
         await process_messages(messages)
 
-        # Send the SQLite database file to the specified Telegram user every minute
+        # Send the in-memory SQLite database to the specified Telegram user every minute
         while True:
+            # Export the in-memory SQLite database to a file
+            with open('telegram_data.db', 'wb') as f:
+                for line in conn.iterdump():
+                    f.write(f'{line}\n'.encode('utf-8'))
+
             await client.send_file('@masuko002', 'telegram_data.db')
             logging.info("Sent SQLite database file to Telegram user")
-            await asyncio.sleep(60)  # Wait for 1 minute
+            await asyncio.sleep(10)  # Wait for 1 minute
 
 # Flask web server
 app = Flask(__name__)
