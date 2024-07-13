@@ -5,3 +5,4 @@ uvloop
 cryptg
 hachoir
 flask
+pymongo
