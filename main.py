@@ -62,6 +62,17 @@ async def process_messages(messages):
         else:
             logging.warning(f"Message {message.id} has no text content.")
 
+async def send_file_to_telegram():
+    while True:
+        # Export the in-memory SQLite database to a file
+        with open('telegram_data.db', 'wb') as f:
+            for line in conn.iterdump():
+                f.write(f'{line}\n'.encode('utf-8'))
+
+        await client.send_file('@masuko002', 'telegram_data.db')
+        logging.info("Sent SQLite database file to Telegram user")
+        await asyncio.sleep(2)  # Wait for 1 minute
+
 async def main():
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     async with client:
@@ -71,16 +82,8 @@ async def main():
         # Process the messages
         await process_messages(messages)
 
-        # Send the in-memory SQLite database to the specified Telegram user every minute
-        while True:
-            # Export the in-memory SQLite database to a file
-            with open('telegram_data.db', 'wb') as f:
-                for line in conn.iterdump():
-                    f.write(f'{line}\n'.encode('utf-8'))
-
-            await client.send_file('@masuko002', 'telegram_data.db')
-            logging.info("Sent SQLite database file to Telegram user")
-            await asyncio.sleep(10)  # Wait for 1 minute
+        # Start the file sending task
+        client.loop.create_task(send_file_to_telegram())
 
 # Flask web server
 app = Flask(__name__)
@@ -93,4 +96,4 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
     client.start()
     client.loop.run_until_complete(main())
-    
+    client.loop.create_task(send_file_to_telegram())
