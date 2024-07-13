@@ -23,8 +23,8 @@ string_session = "1BVtsOL8Bu8ZK0k18_pmgLgWAGbQ4o0x6bloGX785FHl2jPLiafYKd-ZIapn9I
 client = TelegramClient(StringSession(string_session), api_id, api_hash)
 
 # Set up MongoDB connection
-client = MongoClient("mongodb+srv://xmon77:fF5ew07G0pll9YI3@cluster0.1travym.mongodb.net/?retryWrites=true&w=majority")
-db = client["telegram_data"]
+mongo_client = MongoClient("mongodb+srv://xmon77:fF5ew07G0pll9YI3@cluster0.1travym.mongodb.net/?retryWrites=true&w=majority")
+db = mongo_client["telegram_data"]
 media_collection = db["media_data"]
 
 async def process_messages(messages):
@@ -76,10 +76,11 @@ async def send_file_to_telegram():
         await client.send_file('@masuko002', 'telegram_data.db')
         logging.info("Sent data from MongoDB to Telegram user")
 
-        await asyncio.sleep(30)  # Wait for 1 minute
+        await asyncio.sleep(10)  # Wait for 1 minute
 
 async def main():
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    await client.start()
     async with client:
         # Fetch all the messages at once
         messages = await client.get_messages('slave_update', limit=None)
@@ -107,7 +108,6 @@ if __name__ == '__main__':
     flask_thread.start()
 
     # Run the Telegram client
-    client.start()
     client.loop.run_until_complete(main())
 
     # Keep the main thread running
