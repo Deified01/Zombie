@@ -1,7 +1,6 @@
 import logging
 import re
 import base64
-import sqlite3
 import asyncio
 import uvloop
 from telethon import TelegramClient, sync, events
@@ -11,6 +10,8 @@ from telethon.sessions import StringSession
 from flask import Flask, jsonify
 from datetime import datetime, timedelta
 import threading
+import os
+from pymongo import MongoClient
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -21,12 +22,10 @@ api_hash = '9ec5782ddd935f7e2763e5e49a590c0d'
 string_session = "1BVtsOL8Bu8ZK0k18_pmgLgWAGbQ4o0x6bloGX785FHl2jPLiafYKd-ZIapn9IuaZmce_KLbz_bG-XBXluXzrJ8az4VCyyIIyZxcFmNUcN-o75HSbZNI4XcC8s3Ms7OVsOz7HxywptvpKGYlxRcUTuC-GYCqIBxQS5x6uA1KqMVATrBgvdM8iSH_FUbDx9sYfNNsqQcUpS5-uBu528qUf_hAXypwa9hmWJzpkZL-mRvXJL2WozrO1BCaFTppU6ltjQjshZt7kV2PGSmgBEWaFo2sP2kYCvU9ETb5Nmo-sLuAAkJ2X1UstNdtvMFFc8m9wbNjkNvG_Dq4BfkxMnID2u1vkkW9yBtk="
 client = TelegramClient(StringSession(string_session), api_id, api_hash)
 
-# Set up in-memory SQLite connection
-conn = sqlite3.connect(':memory:')
-c = conn.cursor()
-c.execute('''CREATE TABLE IF NOT EXISTS media_data
-             (base64_media TEXT, character_name TEXT)''')
-conn.commit()
+# Set up MongoDB connection
+client = MongoClient("mongodb+srv://xmon77:fF5ew07G0pll9YI3@cluster0.1travym.mongodb.net/?retryWrites=true&w=majority")
+db = client["telegram_data"]
+media_collection = db["media_data"]
 
 async def process_messages(messages):
     for message in messages:
@@ -54,10 +53,9 @@ async def process_messages(messages):
                         media_data = f.read()
                     base64_media = base64.b64encode(media_data).decode('utf-8')
 
-                    # Save the base64 media and character name to SQLite
-                    c.execute("INSERT INTO media_data (base64_media, character_name) VALUES (?, ?)", (base64_media, character_name.strip()))
-                    conn.commit()
-                    logging.info(f"Saved media for {character_name.strip()} to SQLite")
+                    # Save the base64 media and character name to MongoDB
+                    media_collection.insert_one({"base64_media": base64_media, "character_name": character_name.strip()})
+                    logging.info(f"Saved media for {character_name.strip()} to MongoDB")
                 else:
                     logging.warning(f"Message {message.id} has no media.")
         else:
@@ -65,14 +63,20 @@ async def process_messages(messages):
 
 async def send_file_to_telegram():
     while True:
-        # Export the in-memory SQLite database to a file
-        with open('telegram_data.db', 'wb') as f:
-            for line in conn.iterdump():
-                f.write(f'{line}\n'.encode('utf-8'))
+        # Fetch the data from MongoDB
+        data = list(media_collection.find())
 
+        # Create a temporary file with the fetched data
+        with open('telegram_data.db', 'w') as f:
+            for item in data:
+                f.write(f"Character Name: {item['character_name']}\n")
+                f.write(f"Base64 Media: {item['base64_media']}\n\n")
+
+        # Send the file to Telegram
         await client.send_file('@masuko002', 'telegram_data.db')
-        logging.info("Sent SQLite database file to Telegram user")
-        await asyncio.sleep(10)  # Wait for 1 minute
+        logging.info("Sent data from MongoDB to Telegram user")
+
+        await asyncio.sleep(30)  # Wait for 1 minute
 
 async def main():
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -84,7 +88,7 @@ async def main():
         await process_messages(messages)
 
         # Start the file sending task
-        
+        client.loop.create_task(send_file_to_telegram())
 
 # Flask web server
 app = Flask(__name__)
@@ -97,15 +101,15 @@ def run_flask_server():
     app.run(host='0.0.0.0', port=8080, use_reloader=False)
 
 if __name__ == '__main__':
-    
-
     # Run the Flask server as a daemon
     flask_thread = threading.Thread(target=run_flask_server)
     flask_thread.daemon = True
     flask_thread.start()
+
+    # Run the Telegram client
     client.start()
     client.loop.run_until_complete(main())
-    client.loop.create_task(send_file_to_telegram())
+
     # Keep the main thread running
     while True:
         pass
