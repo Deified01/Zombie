@@ -90,6 +90,7 @@ def hello_world():
     return 'Hello, world!'
 
 if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
     client.start()
     client.loop.run_until_complete(main())
-    app.run(host='0.0.0.0', port=8080)
+    
