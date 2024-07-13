@@ -10,6 +10,7 @@ from telethon.tl.types import PeerChannel, Document
 from telethon.sessions import StringSession
 from flask import Flask, jsonify
 from datetime import datetime, timedelta
+import threading
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -71,7 +72,7 @@ async def send_file_to_telegram():
 
         await client.send_file('@masuko002', 'telegram_data.db')
         logging.info("Sent SQLite database file to Telegram user")
-        await asyncio.sleep(2)  # Wait for 1 minute
+        await asyncio.sleep(10)  # Wait for 1 minute
 
 async def main():
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -92,8 +93,19 @@ app = Flask(__name__)
 def hello_world():
     return 'Hello, world!'
 
+def run_flask_server():
+    app.run(host='0.0.0.0', port=8080, use_reloader=False)
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    
+
+    # Run the Flask server as a daemon
+    flask_thread = threading.Thread(target=run_flask_server)
+    flask_thread.daemon = True
+    flask_thread.start()
     client.start()
     client.loop.run_until_complete(main())
     client.loop.create_task(send_file_to_telegram())
+    # Keep the main thread running
+    while True:
+        pass
