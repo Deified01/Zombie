@@ -1,0 +1,7 @@
+telethon
+asyncio
+logging
+uvloop
+cryptg
+hachoir
+sqlite3
