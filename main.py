@@ -19,9 +19,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Set up the Telegram client
 api_id = 8447214
 api_hash = '9ec5782ddd935f7e2763e5e49a590c0d'
-string_session = "1BVtsOL8Bu8ZK0k18_pmgLgWAGbQ4o0x6bloGX785FHl2jPLiafYKd-ZIapn9IuaZmce_KLbz_bG-XBXluXzrJ8az4VCyyIIyZxcFmNUcN-o75HSbZNI4XcC8s3Ms7OVsOz7HxywptvpKGYlxRcUTuC-GYCqIBxQS5x6uA1KqMVATrBgvdM8iSH_FUbDx9sYfNNsqQcUpS5-uBu528qUf_hAXypwa9hmWJzpkZL-mRvXJL2WozrO1BCaFTppU6ltjQjshZt7kV2PGSmgBEWaFo2sP2kYCvU9ETb5Nmo-sLuAAkJ2X1UstNdtvMFFc8m9wbNjkNvG_Dq4BfkxMnID2u1vkkW9yBtk="
+strinng_session = "1BVtsOL8Bu8ZK0k18_pmgLgWAGbQ4o0x6bloGX785FHl2jPLiafYKd-ZIapn9IuaZmce_KLbz_bG-XBXluXzrJ8az4VCyyIIyZxcFmNUcN-o75HSbZNI4XcC8s3Ms7OVsOz7HxywptvpKGYlxRcUTuC-GYCqIBxQS5x6uA1KqMVATrBgvdM8iSH_FUbDx9sYfNNsqQcUpS5-uBu528qUf_hAXypwa9hmWJzpkZL-mRvXJL2WozrO1BCaFTppU6ltjQjshZt7kV2PGSmgBEWaFo2sP2kYCvU9ETb5Nmo-sLuAAkJ2X1UstNdtvMFFc8m9wbNjkNvG_Dq4BfkxMnID2u1vkkW9yBtk="
 client = TelegramClient(StringSession(string_session), api_id, api_hash)
-
+string_session = os.getenv("string")
 # Set up MongoDB connection
 mongo_client = MongoClient("mongodb+srv://xmon77:fF5ew07G0pll9YI3@cluster0.1travym.mongodb.net/?retryWrites=true&w=majority")
 db = mongo_client["telegram_data"]
@@ -61,23 +61,6 @@ async def process_messages(messages):
         else:
             logging.warning(f"Message {message.id} has no text content.")
 
-async def send_file_to_telegram():
-    while True:
-        # Fetch the data from MongoDB
-        data = list(media_collection.find())
-
-        # Create a temporary file with the fetched data
-        with open('telegram_data.db', 'w') as f:
-            for item in data:
-                f.write(f"Character Name: {item['character_name']}\n")
-                f.write(f"Base64 Media: {item['base64_media']}\n\n")
-
-        # Send the file to Telegram
-        await client.send_file('@masuko002', 'telegram_data.db')
-        logging.info("Sent data from MongoDB to Telegram user")
-
-        await asyncio.sleep(10)  # Wait for 1 minute
-
 async def main():
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     await client.start()
@@ -111,5 +94,4 @@ if __name__ == '__main__':
     client.loop.run_until_complete(main())
 
     # Keep the main thread running
-    while True:
-        pass
+  
