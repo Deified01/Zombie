@@ -20,8 +20,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 api_id = 8447214
 api_hash = '9ec5782ddd935f7e2763e5e49a590c0d'
 strinng_session = "1BVtsOL8Bu8ZK0k18_pmgLgWAGbQ4o0x6bloGX785FHl2jPLiafYKd-ZIapn9IuaZmce_KLbz_bG-XBXluXzrJ8az4VCyyIIyZxcFmNUcN-o75HSbZNI4XcC8s3Ms7OVsOz7HxywptvpKGYlxRcUTuC-GYCqIBxQS5x6uA1KqMVATrBgvdM8iSH_FUbDx9sYfNNsqQcUpS5-uBu528qUf_hAXypwa9hmWJzpkZL-mRvXJL2WozrO1BCaFTppU6ltjQjshZt7kV2PGSmgBEWaFo2sP2kYCvU9ETb5Nmo-sLuAAkJ2X1UstNdtvMFFc8m9wbNjkNvG_Dq4BfkxMnID2u1vkkW9yBtk="
-client = TelegramClient(StringSession(string_session), api_id, api_hash)
 string_session = os.getenv("string")
+client = TelegramClient(StringSession(string_session), api_id, api_hash)
 # Set up MongoDB connection
 mongo_client = MongoClient("mongodb+srv://xmon77:fF5ew07G0pll9YI3@cluster0.1travym.mongodb.net/?retryWrites=true&w=majority")
 db = mongo_client["telegram_data"]
